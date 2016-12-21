@@ -39,74 +39,23 @@ task-sample        stopped           0/1         1G       1G
 
 Now we can execute our task:
 ```
-$ APP_GUID=$(cf app task-sample --guid)
-$ TASK_COMMAND=$(cf curl /v3/apps/$APP_GUID/droplets/current | jq .result.process_types.web)
-$ echo '{"command": '$TASK_COMMAND' }' > cmd.json
-$ cf curl /v3/apps/$APP_GUID/tasks -X POST -d @cmd.json
+$ ./runTask.sh task-sample
 ```
 Produces:
-
 ```
-{
-      "guid": "47c93f70-cdcb-471a-8172-9afdf8162989",
-      "sequence_id": 47,
-      "name": "732e4826",
-      "command": "CALCULATED_MEMORY=$($PWD/.java-buildpack/open_jdk_jre/bin/java-buildpack-memory-calculator-2.0.2_RELEASE -memorySizes=metaspace:64m..,stack:228k.. -memoryWeights=heap:65,metaspace:10,native:15,stack:10 -memoryInitials=heap:100%,metaspace:100% -stackThreads=300 -totMemory=$MEMORY_LIMIT) && JAVA_OPTS=\"-Djava.io.tmpdir=$TMPDIR  -XX:OnOutOfMemoryError=$PWD/.java-buildpack/open_jdk_jre/bin/killjava.sh $CALCULATED_MEMORY\" && SERVER_PORT=$PORT eval exec $PWD/.java-buildpack/open_jdk_jre/bin/java $JAVA_OPTS -cp $PWD/. org.springframework.boot.loader.JarLauncher --helloworld.exitStatus=0 --helloworld.greeting=Bill",
-      "state": "SUCCEEDED",
-      "memory_in_mb": 1024,
-      "disk_in_mb": 1024,
-      "result": {
-        "failure_reason": null
-      },
-      "created_at": "2016-12-21T13:46:01Z",
-      "updated_at": "2016-12-21T13:46:15Z",
-      "droplet_guid": "db82d05e-06f0-45a8-8971-7eeea488aeea",
-      "links": {
-        "self": {
-          "href": "https://api.run.pez.pivotal.io/v3/tasks/47c93f70-cdcb-471a-8172-9afdf8162989"
-        },
-        "app": {
-          "href": "https://api.run.pez.pivotal.io/v3/apps/e4917000-fbde-45e7-8e9a-313af9ac9ef0"
-        },
-        "droplet": {
-          "href": "https://api.run.pez.pivotal.io/v3/droplets/db82d05e-06f0-45a8-8971-7eeea488aeea"
-        }
-      }
-    },
+Executing task-sample with GUI e4917000-fbde-45e7-8e9a-313af9ac9ef0
+Executing command
+task-sample "RUNNING" ("93687781-9cd1-48c7-8910-1a06e4c3b91e")
 ```
 
 We can check out the status of our task:
 ```
-cf curl /v3/tasks/87684f9c-62e8-4584-8a23-246b24850a67
+$ ./checkTask.sh 93687781-9cd1-48c7-8910-1a06e4c3b91e
 ```
 Produces:
 ```
-{
-  "guid": "47c93f70-cdcb-471a-8172-9afdf8162989",
-  "sequence_id": 47,
-  "name": "732e4826",
-  "command": "CALCULATED_MEMORY=$($PWD/.java-buildpack/open_jdk_jre/bin/java-buildpack-memory-calculator-2.0.2_RELEASE -memorySizes=metaspace:64m..,stack:228k.. -memoryWeights=heap:65,metaspace:10,native:15,stack:10 -memoryInitials=heap:100%,metaspace:100% -stackThreads=300 -totMemory=$MEMORY_LIMIT) && JAVA_OPTS=\"-Djava.io.tmpdir=$TMPDIR  -XX:OnOutOfMemoryError=$PWD/.java-buildpack/open_jdk_jre/bin/killjava.sh $CALCULATED_MEMORY\" && SERVER_PORT=$PORT eval exec $PWD/.java-buildpack/open_jdk_jre/bin/java $JAVA_OPTS -cp $PWD/. org.springframework.boot.loader.JarLauncher",
-  "state": "SUCCEEDED",
-  "memory_in_mb": 1024,
-  "disk_in_mb": 1024,
-  "result": {
-    "failure_reason": null
-  },
-  "created_at": "2016-12-21T13:46:01Z",
-  "updated_at": "2016-12-21T13:46:15Z",
-  "droplet_guid": "db82d05e-06f0-45a8-8971-7eeea488aeea",
-  "links": {
-    "self": {
-      "href": "https://api.run.pez.pivotal.io/v3/tasks/47c93f70-cdcb-471a-8172-9afdf8162989"
-    },
-    "app": {
-      "href": "https://api.run.pez.pivotal.io/v3/apps/e4917000-fbde-45e7-8e9a-313af9ac9ef0"
-    },
-    "droplet": {
-      "href": "https://api.run.pez.pivotal.io/v3/droplets/db82d05e-06f0-45a8-8971-7eeea488aeea"
-    }
-  }
-},
+Checking task 93687781-9cd1-48c7-8910-1a06e4c3b91e
+"SUCCEEDED"
 ```
 
 We can launch it as many times as we want. We can get the list of task executed tasks.
