@@ -4,8 +4,8 @@ This project demonstrates how to execute tasks, a.k.a. one-off jobs, in a cloud 
 
 There are 2 ways to execute tasks: Directly in the platform or via Spring Cloud Data Flow.
 
-1. [Launch Task natively in PCF](#Launch-task-natively-in-PCF)
-2. [Launch task via Spring Cloud Data Flow](#Launch-task-via-Spring-Cloud-Data-Flow)
+1. [Launch Task natively in PCF](#launch-task-natively-in-pcf)
+2. [Launch task via Spring Cloud Data Flow](#launch-task-via-spring-cloud-data-flow)
 
 ## Launch task natively in PCF
 
