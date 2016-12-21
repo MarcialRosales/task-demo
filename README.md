@@ -11,12 +11,22 @@ There are 2 ways to execute tasks: Directly in the platform or via Spring Cloud 
 
 *Cloud Foundry* allows us to execute `Tasks` which are one-off jobs that are intended to perform a task, stop, and be cleaned up, freeing up resources.
 
-First we need to push the task to *Cloud Foundry*. Our task is a command-line application which does not listen on any ports, hence we don't need a route (`--no-route`) neither a health check (`-u none`) and we don't want to start it when we push it (`--no-start`):
+Our task is a simple command-line Spring Boot application (`task-sample`) which we can launch it locally.
+```
+mvn install
+java -jar target/task-sample-0.0.1-SNAPSHOT.jar --helloworld.greeting=Joe
+```
+And it produces a log statement like this one:
+```
+[null] hello world Joe  [0]
+```
+
+Let's execute our task in *Cloud Foundry*. First we need to push the task. Because our task is a command-line application it does not listen on any ports, hence we don't need a route (`--no-route`) neither a health check (`-u none`) and we don't want to start it when we push it (`--no-start`):
 ```
 $ cf push task-sample --no-route -u none --no-start -p target/task-sample-0.0.1-SNAPSHOT.jar
 ```
 
-We can check our task is ready *Cloud Foundry* :
+We can check our task is ready in *Cloud Foundry* :
 ```
 $ cf apps
 Getting apps in org pivot-mrosales / space development as mrosales@pivotal.io...
