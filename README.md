@@ -3,8 +3,9 @@
 This project demonstrates how to execute tasks, a.k.a. one-off jobs, in a cloud platform like *Pivotal Cloud Foundry*. Unlike applications, a task typically executes for a limited amount of time and it does not expose any ports.
 
 There are 2 ways to execute tasks: Directly in the platform or via Spring Cloud Data Flow.
-1. [Launch Task natively in PCF](#Launch task natively in PCF)
-2. [Launch task via Spring Cloud Data Flow](#Launch task via Spring Cloud Data Flow)
+
+1. [Launch Task natively in PCF](#Launch-task-natively-in-PCF)
+2. [Launch task via Spring Cloud Data Flow](#Launch-task-via-Spring-Cloud-Data-Flow)
 
 ## Launch task natively in PCF
 
