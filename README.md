@@ -13,12 +13,13 @@ There are 2 ways to execute tasks: Directly in the platform or via Spring Cloud 
 
 Our task is a simple command-line Spring Boot application (`task-sample`) which we can launch it locally.
 ```
-mvn install
-java -jar target/task-sample-0.0.1-SNAPSHOT.jar --helloworld.greeting=Joe
+$ cd task-sample
+$ mvn install
+$ java -jar target/task-sample-0.0.1-SNAPSHOT.jar --helloworld.greeting=Joe --helloworld.taskLengthSec=3
 ```
 And it produces a log statement like this one:
 ```
-[null] hello world Joe  [0]
+[null] hello world Joe  [3]
 ```
 
 Let's execute our task in *Cloud Foundry*. First we need to push the task. Because our task is a command-line application it does not listen on any ports, hence we don't need a route (`--no-route`) neither a health check (`-u none`) and we don't want to start it when we push it (`--no-start`):
