@@ -68,9 +68,9 @@ cf curl /v3/apps/$APP_GUID/tasks
 
 [Spring Cloud Data Flow](http://docs.spring.io/spring-cloud-dataflow/docs/current-SNAPSHOT/reference/htmlsingle) is a cloud-native orchestration service that allows us to launch standalone tasks or complex data pipelines. This demonstration project will only show how to launch tasks and track them.
 
-You may be wondering why do we need another server to run our tasks. We want to be able to run our tasks in other runtime environments other than our local machines. SCDF allows us to run our tasks in Cloud Foundry, Apache YARN, Kubernetes, among other runtimes.
+You may be wondering why do we need another server to run our tasks. We want to be able to run our tasks in runtime environments other than our local machines. SCDF allows us to run our tasks in Cloud Foundry, Apache YARN, Kubernetes, among other runtimes.
 
-It is worth clarifying that our tasks run in their own runtime, e.g. in case of using *Cloud Foundry*, a task runs in its container. SCDF provides a set of services that run parallel to our tasks and they are:
+It is worth clarifying that our tasks run in their own runtime, e.g. in case of using *Cloud Foundry*, a task runs in its own container. SCDF provides a set of services that run parallel to our tasks and they are:
 - SCDF Server : Orchestrates task execution. It deploys tasks to the runtime, e.g. *PCF*
 - SCDF Shell : Command-line application that allows us to interact with the SCDF Server
 - SCDF Admin : Web-front end application that allows us to interact with the SCDF Server
@@ -96,7 +96,7 @@ And second, we add a new annotation, `@EnableTask`. This annotation makes this a
 public class TaskSampleApplication {
 ```
 
-That is all we need to do to run our task in SCDF.
+That is all we need to do to. Now let's see how we can launch it.
 
 ### Launch our task in Spring Cloud Data Flow
 
