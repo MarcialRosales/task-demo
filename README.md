@@ -146,9 +146,10 @@ Note: We cannot use the command `task execution list` to check out the task's ex
 
 ### Launch our task in Spring Cloud Data Flow (Cloud Foundry)
 
-In the previous section, we downloaded from Github the source code of SCDF and we built it. This time we are going to create a project for the SCDF and another for the shell. We will discuss later on why this option is far more interesting than using the canned version.
+In the previous section, we run SCDF server locally. In this section, we are going to run it in PCF. Also, in the previous section, we downloaded from Github the source code of SCDF and we built it. This time we are going to create a project for the SCDF server and another for the shell. We will discuss later why this option is far more interesting than using the downloaded version.
 
-Step 1 - Create our *Data Flow Server* (scdf-server).
+Step 1 - Create our *Data Flow Server* (scdf-server)
+
 This will be a Spring Boot application like this one below:
 ```
 @SpringBootApplication
@@ -161,7 +162,8 @@ public class ScdfServerApplication {
 }
 ```
 
-Step 2 - Create our *Data Flow Shell* (scdf-shell)..
+Step 2 - Create our *Data Flow Shell* (scdf-shell)
+
 This will be a Spring Boot Application like this one below:
 ```
 
@@ -176,7 +178,8 @@ public class ScdfShellApplication {
 ```
 
 Step 3 - Deploy *Data Flow Server* to *Cloud Foundry*
-Before we deploy the SCDF server we need to provision the `task-repository` service, i.e. the database we want to use to track the tasks. If we open the `manifest.yml` (src/resources/manifest.yml) we will see that it needs it:
+
+Before we deploy the SCDF server we need to provision the `task-repository` service, i.e. the database we want to use to track the tasks. This is the `manifest.yml` (src/resources/manifest.yml) we will use to push the app:
 ```
 ---
 applications:
@@ -189,7 +192,7 @@ applications:
    - task-repository
 ```
 
-Let's provision a mysql database thru *Cloud Foundry's marketplace*.
+Let's provision the `task-repository` service as a `mysql` database thru *Cloud Foundry's marketplace*.
 ```
 cf create-service p_mysql 100mb task-repository
 ```
@@ -202,6 +205,8 @@ cf push
 
 Step 4 - Run *Data Flow Shell* locally against our *Data Flow Server* running in *Cloud Foundry*
 We are going to follow practically the same steps we did when we run SCDF locally, except that we need to configure the shell with the address where the SCDF Server is.
+
+From the `scdf-shell` folder we run:
 ```
 mvn spring-boot:run
 ```
