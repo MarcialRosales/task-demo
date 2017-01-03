@@ -5,7 +5,8 @@ This project demonstrates how to execute tasks, a.k.a. one-off jobs, in a cloud 
 There are 2 ways to execute tasks: Directly in the platform or via Spring Cloud Data Flow.
 
 1. [Launch Task natively in PCF](#launch-task-natively-in-pcf)
-2. [Launch task via Spring Cloud Data Flow](#launch-task-via-spring-cloud-data-flow)
+2. [Launch task via Spring Cloud Data Flow (Local)](#launch-task-via-spring-cloud-data-flow-local)
+2. [Launch task via Spring Cloud Data Flow (Cloud Foundry)](#launch-task-via-spring-cloud-data-flow-cloud-foundry)
 
 ## Launch task natively in PCF
 
@@ -209,3 +210,5 @@ server-unknown:>dataflow config server http://scdf-server.cfapps.io
 Successfully targeted http://scdf-server.cfapps.io
 dataflow:>
 ```
+
+Step 5 - Register and Launch our task
