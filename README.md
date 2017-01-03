@@ -58,7 +58,7 @@ Checking task 93687781-9cd1-48c7-8910-1a06e4c3b91e
 "SUCCEEDED"
 ```
 
-We can launch it as many times as we want. We can get the list of task executed tasks.
+We can launch it as many times as we want. We can get the list of executed tasks.
 ```
 cf curl /v3/apps/$APP_GUID/tasks
 ```
@@ -66,27 +66,21 @@ cf curl /v3/apps/$APP_GUID/tasks
 
 ## Launch task via Spring Cloud Data Flow
 
-### Create our simple `hello world` task
+[Spring Cloud Data Flow](http://docs.spring.io/spring-cloud-dataflow/docs/current-SNAPSHOT/reference/htmlsingle) is a cloud-native orchestration service that allows us to launch standalone tasks or complex data pipelines. This demonstration project will only show how to launch tasks and track them.
 
-We create a simple Spring Boot app called `task-sample` and we execute it locally by running this simple statements:
+You may be wondering why do we need another server to run our tasks. We want to be able to run our tasks in other runtime environments other than our local machines. SCDF allows us to run our tasks in Cloud Foundry, Apache YARN, Kubernetes, among other runtimes.
 
-Launch it with a given greeting message and the task takes at least 3 seconds to execute
-```
-mvn install
-java -jar target/task-sample-0.0.1-SNAPSHOT.jar --helloworld.greeting=Bob --helloworld.taskLengthSec=3
-```
+It is worth clarifying that our tasks run in their own runtime, e.g. in case of using *Cloud Foundry*, a task runs in its container. SCDF provides a set of services that run parallel to our tasks and they are:
+- SCDF Server : Orchestrates task execution. It deploys tasks to the runtime, e.g. *PCF*
+- SCDF Shell : Command-line application that allows us to interact with the SCDF Server
+- SCDF Admin : Web-front end application that allows us to interact with the SCDF Server
+![SCDF Runtime](https://raw.githubusercontent.com/spring-cloud/spring-cloud-dataflow/master/spring-cloud-dataflow-docs/src/main/asciidoc/images/dataflow-server-arch.png)
 
-Launch the task so that it fails
-```
-java -jar target/task-sample-0.0.1-SNAPSHOT.jar --helloworld.greeting=Bob --helloworld.taskLengthSec=3 --helloworld.exitStatus=1
-```
+### Update our task-sample project
 
-Let's launch this task thru the Spring Cloud Data Flow server. This is a server that allows us to launch our tasks. Why do we need another server to run our tasks? Because we want to run our task in other environments, not only in our local machine. For instance, we can run our task in Cloud Foundry, or Apache YARN or locally.
+We are going to use our `task-sample` project but we need to make some changes so that it can be launched as an *SCDF Task*.
 
-About our `task-sample` application:
-- It is a standard Spring Boot app with a new annotation, `@EnableTask`. This annotation makes this application `suitable` to run within Spring Cloud Data Flow server as a **Task**.
-- In addition to the `@EnableTask` annotation, we've added a `CommandLineRunner` bean that contains the logic for our task.
-- It has a new dependency
+First we add a new dependency to the pom.xml.
 ```
 <dependency>
   <groupId>org.springframework.cloud</groupId>
@@ -94,6 +88,15 @@ About our `task-sample` application:
   <version>1.0.2.RELEASE</version>
 </dependency>
 ```
+
+And second, we add a new annotation, `@EnableTask`. This annotation makes this application `suitable` to run within Spring Cloud Data Flow server as a **Task**.
+```
+@SpringBootApplication
+@EnableTask
+public class TaskSampleApplication {
+```
+
+That is all we need to do to run our task in SCDF.
 
 ### Launch our task in Spring Cloud Data Flow
 
