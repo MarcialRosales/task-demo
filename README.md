@@ -204,13 +204,13 @@ cf push
 ```
 
 Step 4 - Run *Data Flow Shell* locally against our *Data Flow Server* running in *Cloud Foundry*
+
 We are going to follow practically the same steps we did when we run SCDF locally, except that we need to configure the shell with the address where the SCDF Server is.
 
 From the `scdf-shell` folder we run:
 ```
 mvn spring-boot:run
-```
-```
+
 server-unknown:>dataflow config server http://scdf-server.cfapps.io
 Successfully targeted http://scdf-server.cfapps.io
 dataflow:>
