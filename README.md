@@ -66,15 +66,14 @@ cf curl /v3/apps/$APP_GUID/tasks
 
 ## Launch task via Spring Cloud Data Flow
 
-[Spring Cloud Data Flow](http://docs.spring.io/spring-cloud-dataflow/docs/current-SNAPSHOT/reference/htmlsingle) is a cloud-native orchestration service that allows us to launch standalone tasks or complex data pipelines. This demonstration project will only show how to launch tasks and track them.
+[Spring Cloud Data Flow](http://docs.spring.io/spring-cloud-dataflow/docs/current-SNAPSHOT/reference/htmlsingle) is a cloud-native orchestration service that allows us to launch standalone tasks or complex data pipelines. This demonstration project will only show how to launch tasks.
 
-You may be wondering why do we need another server to run our tasks. We want to be able to run our tasks in runtime environments other than our local machines. SCDF allows us to run our tasks in Cloud Foundry, Apache YARN, Kubernetes, among other runtimes.
+You may be wondering why do we need another server to run our tasks. We want to be able to run our tasks in runtime environments other than our local machines. SCDF allows us to run our tasks in Cloud Foundry, Apache YARN, Kubernetes, and other runtimes.
 
-It is worth clarifying that our tasks run in their own runtime, e.g. in case of using *Cloud Foundry*, a task runs in its own container. SCDF provides a set of services that run parallel to our tasks and they are:
-- SCDF Server : Orchestrates task execution. It deploys tasks to the runtime, e.g. *PCF*
-- SCDF Shell : Command-line application that allows us to interact with the SCDF Server
-- SCDF Admin : Web-front end application that allows us to interact with the SCDF Server
+It is worth clarifying that our tasks run in their own runtime, e.g. in case of using *Cloud Foundry*, a task runs in its own container. In the diagram below we can see in our side the SCDF Server and 2 Spring Boot applications, http and cassandra, launched by the SCDF Server and running in their own container. The diagram shows a data pipeline where the *http* application acts as a source of data messages and the *cassandra* as the sink. The two applications are linked thru some messaging middleware like RabbitMQ. The only thing really important right now is the fact that our applications, or tasks, run as standalone applications.
 ![SCDF Runtime](https://raw.githubusercontent.com/spring-cloud/spring-cloud-dataflow/master/spring-cloud-dataflow-docs/src/main/asciidoc/images/dataflow-server-arch.png)
+
+The role of the SCDF server is to expose an api (REST) that we use to register our applications and tell SCDF to launch them. And SCDF server interacts with the target runtime to deploy them. For convenience, *Spring Cloud Data Flow* comes with a shell application which is the client side of the SCDF server. Whenever we want to register an application or launch it, we start the SCDF shell and submit commands to it as we will see shortly.
 
 ### Update our task-sample project
 
@@ -98,7 +97,7 @@ public class TaskSampleApplication {
 
 That is all we need to do to. Now let's see how we can launch it.
 
-### Launch our task in Spring Cloud Data Flow
+### Launch our task in Spring Cloud Data Flow (Local)
 
 Step 1 - Clone [Spring Cloud Data Flow](https://github.com/spring-cloud/spring-cloud-dataflow) repository
 
@@ -110,10 +109,10 @@ Step 3 - Launch ‘Local’ Server [spring-cloud-dataflow-server-local/target]
 Step 4 - Launch Shell [spring-cloud-dataflow-shell/target]
 `java -jar spring-cloud-dataflow-shell/target/spring-cloud-dataflow-shell-[VERSION].jar`
 
-Launching a task in Spring Cloud Data Flow, SCDF from now on, requires 3 steps:
-1. Register our application's code with the SCDF so that it can execute it. There are various ways to register our application's code. The most intuitive one is to register the jar we just built.
-2. Create the task definition that links our application's code with a logical name.
-3. Launch the task with any required parameters, e.g. our greetings message or the exit status.
+Launching a task in SCDF requires 3 steps:
+- Register our application's code with the SCDF so that it can execute it. There are various ways to register our application's code. The most intuitive one is to register the jar we just built.
+- Create the task definition that links our application's code with a logical name.
+- Launch the task with any required parameters, e.g. our greetings message or the exit status.
 
 Step 5 - Register our application's code via the SCDF's shell
 ```
@@ -144,28 +143,69 @@ task list
 ```
 Note: We cannot use the command `task execution list` to check out the task's exit code or its start and end time because by default if we use H2 database for the TaskRepository, Spring Cloud Task does not record the executed tasks in the db.
 
+### Launch our task in Spring Cloud Data Flow (Cloud Foundry)
 
-## Launch a pipeline where every http request is sent to a log file
+In the previous section, we downloaded from Github the source code of SCDF and we built it. This time we are going to create a project for the SCDF and another for the shell. We will discuss later on why this option is far more interesting than using the canned version.
 
-SCDF comes with lots of *modules* that we can use to build our pipelines. We don't need to implement every task that makes up our pipelines. What are those *modules*? They are defined here http://cloud.spring.io/spring-cloud-stream-app-starters/ and they can be of 3 types: source, processor and sink. A *source module* is an application that produces data. A *processor module* is an application which receives data, transforms it and maybe produces a new data. A *sink module* is an application that consumes data. Modules are linked together via a messaging middleware. There 2 types: RabbitMQ and Kafka.
+Step 1 - Create our *Data Flow Server* (scdf-server).
+This will be a Spring Boot application like this one below:
+```
+@SpringBootApplication
+@EnableDataFlowServer
+public class ScdfServerApplication {
 
-We are not going to implement a `http` task or a `log` task because SCDF comes with these tasks. If we execute `app list` in the SCDF shell we wont see these apps because we have not imported them. Let's create a file where we indicate we want to register the modules we are interested in.
-
-Lets edit our file that we are going to call it http-log-module-descriptors.properties
-```
-source.http=maven://org.springframework.cloud.stream.app:http-source-rabbit:1.0.4.RELEASE
-sink.log=maven://org.springframework.cloud.stream.app:log-sink-rabbit:1.0.4.RELEASE
-```
-and let's import these modules:
-```
-dataflow:>app import --uri file:///Users/mrosales/Documents/task-demo/http-log-module-descriptors.properties
-```
-Produces:
-```
-Successfully registered applications: [sink.log, source.http]
+	public static void main(String[] args) {
+		SpringApplication.run(ScdfServerApplication.class, args);
+	}
+}
 ```
 
-If you want to load all the modules call this command instead:
+Step 2 - Create our *Data Flow Shell* (scdf-shell)..
+This will be a Spring Boot Application like this one below:
 ```
-dataflow:>app import --uri http://bit.ly/1-0-4-GA-stream-applications-rabbit-maven
+
+@SpringBootApplication
+@EnableDataFlowShell
+public class ScdfShellApplication {
+
+	public static void main(String[] args) {
+		SpringApplication.run(ScdfShellApplication.class, args);
+	}
+}
+```
+
+Step 3 - Deploy *Data Flow Server* to *Cloud Foundry*
+Before we deploy the SCDF server we need to provision the `task-repository` service, i.e. the database we want to use to track the tasks. If we open the `manifest.yml` (src/resources/manifest.yml) we will see that it needs it:
+```
+---
+applications:
+- name: scdf-server
+  host: scdf-server
+  path: '@project.build.finalName@.jar'
+  memory: 1G
+  disk_quota: 2G
+  services:
+   - task-repository
+```
+
+Let's provision a mysql database thru *Cloud Foundry's marketplace*.
+```
+cf create-service p_mysql 100mb task-repository
+```
+
+Now, we can build and push the SCDF server by calling the following command from `scdf-server` folder:
+```
+mvn install
+cf push
+```
+
+Step 4 - Run *Data Flow Shell* locally against our *Data Flow Server* running in *Cloud Foundry*
+We are going to follow practically the same steps we did when we run SCDF locally, except that we need to configure the shell with the address where the SCDF Server is.
+```
+mvn spring-boot:run
+```
+```
+server-unknown:>dataflow config server http://scdf-server.cfapps.io
+Successfully targeted http://scdf-server.cfapps.io
+dataflow:>
 ```
