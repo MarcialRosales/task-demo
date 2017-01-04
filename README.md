@@ -11,7 +11,7 @@ There are 2 ways to execute tasks: Directly in the platform or via Spring Cloud 
 ## Launch task natively in PCF
 
 *Cloud Foundry* allows us to execute `Tasks` which are one-off jobs that are intended to perform a task, stop, and be cleaned up, freeing up resources:
-- A task is a command run in the context of an app (a process run against a droplet)
+- A task is a command run in the context of an app, therefore a task is an instantiation of an application previously deployed in PCF (a process run against a droplet).
 - A task is only ever run at most once
 - A task can either fail or succeed
 - A task includes the command to start the process, disk size, and memory allocation
@@ -36,7 +36,7 @@ And it produces a log statement like this one:
 [null] hello world Joe  [3]
 ```
 
-Let's execute our task in *Cloud Foundry*. First we need to push the task. Because our task is a command-line application it does not listen on any ports, hence we don't need a route (`--no-route`) neither a health check (`-u none`) and we don't want to start it when we push it (`--no-start`):
+Let's execute our task in *Cloud Foundry*. First we need to push the task's code, or application. Because our task is a command-line application it does not listen on any ports, hence we don't need a route (`--no-route`) neither a health check (`-u none`) and we don't want to start it when we push it (`--no-start`):
 ```
 $ cf push task-sample --no-route -u none --no-start -p target/task-sample-0.0.1-SNAPSHOT.jar
 ```
@@ -51,7 +51,8 @@ name               requested state   instances   memory   disk   urls
 task-sample        stopped           0/1         1G       1G
 ```
 
-Now we can execute our task:
+Now we can execute our task. We will use the [v3 REST api of *Cloud Foundry*](http://v3-apidocs.cloudfoundry.org/version/3.0.0/index.html#tasks) however we can equally run tasks via the [CF CLI](https://docs.cloudfoundry.org/devguide/using-tasks.html#task-proceses).
+
 ```
 $ ./runTask.sh task-sample
 ```
