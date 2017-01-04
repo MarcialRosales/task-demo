@@ -10,7 +10,20 @@ There are 2 ways to execute tasks: Directly in the platform or via Spring Cloud 
 
 ## Launch task natively in PCF
 
-*Cloud Foundry* allows us to execute `Tasks` which are one-off jobs that are intended to perform a task, stop, and be cleaned up, freeing up resources.
+*Cloud Foundry* allows us to execute `Tasks` which are one-off jobs that are intended to perform a task, stop, and be cleaned up, freeing up resources:
+- A task is a command run in the context of an app (a process run against a droplet)
+- A task is only ever run at most once
+- A task can either fail or succeed
+- A task includes the command to start the process, disk size, and memory allocation
+- A task inherits environment variables, service bindings and security groups bound to the application
+- A task is a single-use object which can be checked for state and success/failure message
+- To re-execute a task, a new task must be created
+- A task is cancelable
+- A syslog drain attached to an app will receive task log output
+- Stdout/stderr from the task will be available on the app’s firehose logs
+- Tasks are always executed asynchronously
+- Tasks respect app, space, and organization level memory quotas
+- Task execution history is retained for one month
 
 Our task is a simple command-line Spring Boot application (`task-sample`) which we can launch it locally.
 ```
@@ -193,14 +206,20 @@ applications:
 ```
 
 Let's provision the `task-repository` service as a `mysql` database thru *Cloud Foundry's marketplace*.
+First of all, let's check out what plans exist by running
 ```
-cf create-service p_mysql 100mb task-repository
+$> cf marketplace -s p-mysql
+service plan   description           free or paid
+100mb-dev      Shared MySQL Server   free
+2000mb-prod    for AppDog            free
+
+$> cf create-service p_mysql 100mb-dev task-repository
 ```
 
 Now, we can build and push the SCDF server by calling the following command from `scdf-server` folder:
 ```
 mvn install
-cf push
+cf push -f target/manifest.yml
 ```
 
 Step 4 - Run *Data Flow Shell* locally against our *Data Flow Server* running in *Cloud Foundry*
