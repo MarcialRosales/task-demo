@@ -114,14 +114,14 @@ That is all we need to do to. Now let's see how we can launch it.
 
 ### Launch our task in Spring Cloud Data Flow (Local)
 
-Step 1 - Clone [Spring Cloud Data Flow](https://github.com/spring-cloud/spring-cloud-dataflow) repository
+**Step 1 - Clone [Spring Cloud Data Flow](https://github.com/spring-cloud/spring-cloud-dataflow) repository**
 
-Step 2 - Build Project `./mvnw clean install`
+**Step 2 - Build Project `./mvnw clean install`**
 
-Step 3 - Launch ‘Local’ Server [spring-cloud-dataflow-server-local/target]
+**Step 3 - Launch ‘Local’ Server [spring-cloud-dataflow-server-local/target]**
 `jjava -jar spring-cloud-dataflow-server-local/target/spring-cloud-dataflow-server-local-[VERSION].jar`
 
-Step 4 - Launch Shell [spring-cloud-dataflow-shell/target]
+**Step 4 - Launch Shell [spring-cloud-dataflow-shell/target]**
 `java -jar spring-cloud-dataflow-shell/target/spring-cloud-dataflow-shell-[VERSION].jar`
 
 Launching a task in SCDF requires 3 steps:
@@ -129,30 +129,30 @@ Launching a task in SCDF requires 3 steps:
 - Create the task definition that links our application's code with a logical name.
 - Launch the task with any required parameters, e.g. our greetings message or the exit status.
 
-Step 5 - Register our application's code via the SCDF's shell
+**Step 5 - Register our application's code via the SCDF's shell**
 ```
 dataflow:>app register --name task-sample --type task --uri file:///Users/mrosales/Documents/task-demo/task-sample/target/task-sample-0.0.1-SNAPSHOT.jar
 ```
 
-Step 6 - Verify your task application has been registered by using the `app list` command
+**Step 6 - Verify your task application has been registered by using the `app list` command**
 ```
 dataflow:>app list
 ```
 
-Step 7 - Create a task definition
+**Step 7 - Create a task definition**
 ```
 dataflow:>task create hello-world --definition "task-sample"
 ```
 
-Step 8 - Verify your task has been created by visiting `http://localhost:9393/dashboard/index.html#/tasks/definitions` or by running `task list` command in the SCDF's Shell.
+**Step 8 - Verify your task has been created by visiting `http://localhost:9393/dashboard/index.html#/tasks/definitions` or by running `task list` command in the SCDF's Shell.**
 
 
-Step 9 - Launch the `hello-world` task with the greeting `Bob` and takes 10 seconds to execute
+**Step 9 - Launch the `hello-world` task with the greeting `Bob` and takes 10 seconds to execute**
 ```
 dataflow:>task launch hello-world --arguments "--helloworld.greeting=Bob,--helloworld.taskLengthSec=10"
 ```
 
-Step 10 - Verify the task's status is `Completed` (this is regardless of the exit status)
+**Step 10 - Verify the task's status is `Completed` (this is regardless of the exit status)**
 ```
 task list
 ```
@@ -162,13 +162,13 @@ Note: We cannot use the command `task execution list` to check out the task's ex
 
 In the previous section, we run SCDF server locally. In this section, we are going to run it in PCF. Also, in the previous section, we downloaded from Github the source code of SCDF and we built it. This time we are going to download a SCDF server built specifically to be deployed onto *Cloud Foundry*.
 
-Step 1 - Download Spring Cloud Data Flow for Cloud Foundry
+**Step 1 - Download Spring Cloud Data Flow for Cloud Foundry**
 
 ```
 wget http://repo.spring.io/snapshot/org/springframework/cloud/spring-cloud-dataflow-server-cloudfoundry/1.1.0.BUILD-SNAPSHOT/spring-cloud-dataflow-server-cloudfoundry-1.1.0.BUILD-SNAPSHOT.jar
 ```
 
-Step 2 - Deploy Spring Cloud Data Flow on Cloud Foundry
+**Step 2 - Deploy Spring Cloud Data Flow on Cloud Foundry**
 
 Before we deploy the SCDF server we need to provision the `task-repository` service, i.e. the database we want to use to track the tasks. We also need to provision a Redis instance used by SCDF to track analytics.
 
@@ -208,7 +208,7 @@ Now we can start the SCDF server:
 cf start scdf-server
 ```
 
-Step 3 - Launch Shell [spring-cloud-dataflow-shell/target]
+**Step 3 - Launch Shell [spring-cloud-dataflow-shell/target]**
 
 We use the SCDF Shell to interact with the SCDF server. We need to configure it to point to the newly deployed SCDF Server in *Cloud Foundry*.
 
@@ -221,9 +221,9 @@ dataflow:>
 
 ```
 
-Step 4 - Register the application and launch it
+**Step 4 - Register the application and launch it**
 
-When we ran the SCDF locally we could import the application directly from the local file system. When we run it in *Cloud Foundry* we need to use other mechanisms. We can either specify a http or maven `uri`. We have built and released our task-sample as a release in Github and it is available in this url: https://github.com/MarcialRosales/task-demo/releases/download/v1.0/task-sample-0.0.1-SNAPSHOT.jar. If we use *Artifactory* as our corporate *Maven* repository, we would have to configure SCDF Server with the location of our Artifactory (`cf set-env scdf-server MAVEN_REMOTE_REPOSITORIES_REPO1_URL https://artifactory/libs-snapshot`) and the URI following this pattern `maven://com.example:task-sample:0.0.1-SNAPSHOT`. 
+When we ran the SCDF locally we could import the application directly from the local file system. When we run it in *Cloud Foundry* we need to use other mechanisms. We can either specify a http or maven `uri`. We have built and released our task-sample as a release in Github and it is available in this url: https://github.com/MarcialRosales/task-demo/releases/download/v1.0/task-sample-0.0.1-SNAPSHOT.jar. If we use *Artifactory* as our corporate *Maven* repository, we would have to configure SCDF Server with the location of our Artifactory (`cf set-env scdf-server MAVEN_REMOTE_REPOSITORIES_REPO1_URL https://artifactory/libs-snapshot`) and the URI following this pattern `maven://com.example:task-sample:0.0.1-SNAPSHOT`.
 
 ```
 dataflow:>app import --uri https://github.com/MarcialRosales/task-demo/releases/download/v1.0/task-sample-0.0.1-SNAPSHOT.jar
