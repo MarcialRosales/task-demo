@@ -119,7 +119,7 @@ Step 1 - Clone [Spring Cloud Data Flow](https://github.com/spring-cloud/spring-c
 Step 2 - Build Project `./mvnw clean install`
 
 Step 3 - Launch ‘Local’ Server [spring-cloud-dataflow-server-local/target]
-`java -jar spring-cloud-dataflow-server-local/target/spring-cloud-dataflow-server-local-[VERSION].jar`
+`jjava -jar spring-cloud-dataflow-server-local/target/spring-cloud-dataflow-server-local-[VERSION].jar`
 
 Step 4 - Launch Shell [spring-cloud-dataflow-shell/target]
 `java -jar spring-cloud-dataflow-shell/target/spring-cloud-dataflow-shell-[VERSION].jar`
@@ -160,80 +160,104 @@ Note: We cannot use the command `task execution list` to check out the task's ex
 
 ### Launch our task in Spring Cloud Data Flow (Cloud Foundry)
 
-In the previous section, we run SCDF server locally. In this section, we are going to run it in PCF. Also, in the previous section, we downloaded from Github the source code of SCDF and we built it. This time we are going to create a project for the SCDF server and another for the shell. We will discuss later why this option is far more interesting than using the downloaded version.
+In the previous section, we run SCDF server locally. In this section, we are going to run it in PCF. Also, in the previous section, we downloaded from Github the source code of SCDF and we built it. This time we are going to download a SCDF server built specifically to be deployed onto *Cloud Foundry*.
 
-Step 1 - Create our *Data Flow Server* (scdf-server)
+Step 1 - Download Spring Cloud Data Flow for Cloud Foundry
 
-This will be a Spring Boot application like this one below:
 ```
-@SpringBootApplication
-@EnableDataFlowServer
-public class ScdfServerApplication {
-
-	public static void main(String[] args) {
-		SpringApplication.run(ScdfServerApplication.class, args);
-	}
-}
+wget http://repo.spring.io/snapshot/org/springframework/cloud/spring-cloud-dataflow-server-cloudfoundry/1.1.0.BUILD-SNAPSHOT/spring-cloud-dataflow-server-cloudfoundry-1.1.0.BUILD-SNAPSHOT.jar
 ```
 
-Step 2 - Create our *Data Flow Shell* (scdf-shell)
+Step 2 - Deploy Spring Cloud Data Flow on Cloud Foundry
 
-This will be a Spring Boot Application like this one below:
-```
-
-@SpringBootApplication
-@EnableDataFlowShell
-public class ScdfShellApplication {
-
-	public static void main(String[] args) {
-		SpringApplication.run(ScdfShellApplication.class, args);
-	}
-}
-```
-
-Step 3 - Deploy *Data Flow Server* to *Cloud Foundry*
-
-Before we deploy the SCDF server we need to provision the `task-repository` service, i.e. the database we want to use to track the tasks. This is the `manifest.yml` (src/resources/manifest.yml) we will use to push the app:
-```
----
-applications:
-- name: scdf-server
-  host: scdf-server
-  path: '@project.build.finalName@.jar'
-  memory: 1G
-  disk_quota: 2G
-  services:
-   - task-repository
-```
+Before we deploy the SCDF server we need to provision the `task-repository` service, i.e. the database we want to use to track the tasks. We also need to provision a Redis instance used by SCDF to track analytics.
 
 Let's provision the `task-repository` service as a `mysql` database thru *Cloud Foundry's marketplace*.
-First of all, let's check out what plans exist by running
-```
-$> cf marketplace -s p-mysql
-service plan   description           free or paid
-100mb-dev      Shared MySQL Server   free
-2000mb-prod    for AppDog            free
 
-$> cf create-service p_mysql 100mb-dev task-repository
+```
+$> cf create-service cleardb spark scdf-task-repo
+$> cf create-service rediscloud 100mb scdf-analytics
+
 ```
 
-Now, we can build and push the SCDF server by calling the following command from `scdf-server` folder:
+Now, we can push the SCDF server:
 ```
-mvn install
-cf push -f target/manifest.yml
+cf push scdf-server-mr -m 2G -k 2G --no-start -p spring-cloud-dataflow-server-cloudfoundry-1.1.0.BUILD-SNAPSHOT.jar
 ```
 
-Step 4 - Run *Data Flow Shell* locally against our *Data Flow Server* running in *Cloud Foundry*
-
-We are going to follow practically the same steps we did when we run SCDF locally, except that we need to configure the shell with the address where the SCDF Server is.
-
-From the `scdf-shell` folder we run:
+We bind the services to the SCDF server:
 ```
-mvn spring-boot:run
+cf bind-service scdf-server scdf-task-repo
+cf bind-service scdf-server scdf-analytics
+```
+
+And we configure the SCDF server. These settings tell the SCDF Server where to deploy the tasks.
+```
+cf set-env scdf-server-mr SPRING_CLOUD_DEPLOYER_CLOUDFOUNDRY_URL https://api.run.pivotal.io
+cf set-env scdf-server-mr SPRING_CLOUD_DEPLOYER_CLOUDFOUNDRY_ORG pivotal-emea-cso
+cf set-env scdf-server-mr SPRING_CLOUD_DEPLOYER_CLOUDFOUNDRY_SPACE mrosales
+cf set-env scdf-server-mr SPRING_CLOUD_DEPLOYER_CLOUDFOUNDRY_DOMAIN cfapps.io
+cf set-env scdf-server-mr SPRING_CLOUD_DEPLOYER_CLOUDFOUNDRY_TASK_SERVICES scdf-task-repo
+cf set-env scdf-server-mr SPRING_CLOUD_DEPLOYER_CLOUDFOUNDRY_USERNAME <put here your username>
+cf set-env scdf-server-mr SPRING_CLOUD_DEPLOYER_CLOUDFOUNDRY_PASSWORD <put here your password>
+cf set-env scdf-server-mr SPRING_CLOUD_DEPLOYER_CLOUDFOUNDRY_SKIP_SSL_VALIDATION false
+```
+
+Now we can start the SCDF server:
+```
+cf start scdf-server
+```
+
+Step 3 - Launch Shell [spring-cloud-dataflow-shell/target]
+
+We use the SCDF Shell to interact with the SCDF server. We need to configure it to point to the newly deployed SCDF Server in *Cloud Foundry*.
+
+```
+java -jar spring-cloud-dataflow-shell/target/spring-cloud-dataflow-shell-[VERSION].jar
 
 server-unknown:>dataflow config server http://scdf-server.cfapps.io
 Successfully targeted http://scdf-server.cfapps.io
 dataflow:>
+
 ```
 
-Step 5 - Register and Launch our task
+Step 4 - Register the application and launch it
+
+When we ran the SCDF locally we could import the application directly from the local file system. When we run it in *Cloud Foundry* we need to use other mechanisms. We can either specify a http or maven `uri`. We have built and released our task-sample as a release in Github and it is available in this url: https://github.com/MarcialRosales/task-demo/releases/download/v1.0/task-sample-0.0.1-SNAPSHOT.jar. If we use *Artifactory* as our corporate *Maven* repository, we would have to configure SCDF Server with the location of our Artifactory (`cf set-env scdf-server MAVEN_REMOTE_REPOSITORIES_REPO1_URL https://artifactory/libs-snapshot`) and the URI following this pattern `maven://com.example:task-sample:0.0.1-SNAPSHOT`. 
+
+```
+dataflow:>app import --uri https://github.com/MarcialRosales/task-demo/releases/download/v1.0/task-sample-0.0.1-SNAPSHOT.jar
+dataflow:>task create hello-world --definition "task-sample"
+dataflow:>task launch hello-world --arguments "--helloworld.greeting=Bob"
+```
+
+Once we launch it we can check that *Cloud Foundry* has deployed our application `task-sample`.
+```
+$ cf apps
+Getting apps in org pivotal-emea-cso / space mrosales as mrosales@pivotal.io...
+OK
+
+name             requested state   instances   memory   disk   urls
+hello-world     stopped           0/1         1G       1G
+scdf-server-mr     started           1/1         2G       2G     scdf-server-mr.cfapps.io
+```
+
+Also, we can check the logs of our task `hello-world`:
+```
+$ cf logs hello-world
+....
+2017-01-05T15:41:04.91+0100 [APP/TASK/hello-world4/0]OUT [null] hello world Bob  [0]
+....
+```
+
+We can launch the task with different parameters again:
+```
+dataflow:>task launch hello-world --arguments "--helloworld.greeting=Bill"
+```
+
+```
+$ cf logs hello-world
+...
+2017-01-05T15:41:40.85+0100 [APP/TASK/hello-world4/0]OUT [null] hello world Bill  [0]
+...
+```
